@@ -8,7 +8,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, Like
+from bangazonapi.models import Product, Customer, ProductCategory, Like, customer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -306,14 +306,43 @@ class Products(ViewSet):
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=['post'], detail=True)
+    @action(methods=['post', 'delete'], detail=True)
     def like(self, request, pk=None):
 
-        products = Product.objects.all()
-
         if request.method == "POST":
-            like = Like()
-            like.customer = Customer.objects.get(user=request.auth.user)
-            like.product = products.filter(pk=pk)[0]
-            like.save()
-            return Response(None, status=status.HTTP_204_NO_CONTENT)
+            try:
+                like = Like()
+                like.customer = Customer.objects.get(user=request.auth.user)
+                like.product = Product.objects.filter(pk=pk)[0]
+                like.save()
+                return Response(None, status=status.HTTP_201_CREATED)
+            except Like.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if request.method == "DELETE":
+            try:
+                like = Like.objects.get(product=pk, customer_id=request.auth.user.id)
+                like.delete()
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            except Like.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        # if request.method == "GET":
+        #     likes = Like.objects.filter(customer=request.auth.user)
+        #     serializer = LikeSerializer(
+        #         likes, many=True, context={'request': request}
+        #     )
+        #     return Response(serializer.data)
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    """JSON serializer for Likes"""
+    class Meta:
+        model = Like
+        fields = ('id', 'customer', 'product', )
+        depth = 1
