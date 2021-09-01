@@ -306,9 +306,14 @@ class Products(ViewSet):
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(method=['post', 'delete'], detail=True)
+    @action(methods=['post'], detail=True)
     def like(self, request, pk=None):
+
+        products = Product.objects.all()
 
         if request.method == "POST":
             like = Like()
-            
+            like.customer = Customer.objects.get(user=request.auth.user)
+            like.product = products.filter(pk=pk)[0]
+            like.save()
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
