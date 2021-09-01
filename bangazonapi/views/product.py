@@ -291,7 +291,7 @@ class Products(ViewSet):
         return Response(serializer.data)
 
     @action(methods=['post'], detail=True)
-    def recommend(self, request):
+    def recommend(self, request, pk=None):
         """Recommend products to other users"""
 
         if request.method == "POST":
