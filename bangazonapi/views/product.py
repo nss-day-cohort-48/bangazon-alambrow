@@ -291,7 +291,7 @@ class Products(ViewSet):
         return Response(serializer.data)
 
     @action(methods=['post'], detail=True)
-    def recommend(self, request, pk=None):
+    def recommend(self, request):
         """Recommend products to other users"""
 
         if request.method == "POST":
@@ -323,21 +323,24 @@ class Products(ViewSet):
 
         if request.method == "DELETE":
             try:
-                like = Like.objects.get(product=pk, customer_id=request.auth.user.id)
+                like = Like.objects.get(product=pk, customer=request.auth.user.customer)
                 like.delete()
-                return Response({}, status=status.HTTP_204_NO_CONTENT)
+                return Response({'message': 'Like deleted'}, status=status.HTTP_204_NO_CONTENT)
             except Like.DoesNotExist as ex:
                 return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as ex:
                 return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
-        # if request.method == "GET":
-        #     likes = Like.objects.filter(customer=request.auth.user)
-        #     serializer = LikeSerializer(
-        #         likes, many=True, context={'request': request}
-        #     )
-        #     return Response(serializer.data)
+
+    @action(detail=False)   
+    def liked(self, request):
+        try:
+            likes = Like.objects.filter(customer=request.auth.user.customer)
+            serializer = LikeSerializer(
+                likes, many=True, context={'request': request}
+            )
+            return Response(serializer.data)
+        except Exception as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LikeSerializer(serializers.ModelSerializer):
