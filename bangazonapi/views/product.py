@@ -8,7 +8,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, Like
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -305,3 +305,10 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(method=['post', 'delete'], detail=True)
+    def like(self, request, pk=None):
+
+        if request.method == "POST":
+            like = Like()
+            
