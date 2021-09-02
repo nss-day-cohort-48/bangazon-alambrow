@@ -86,30 +86,35 @@ class Products(ViewSet):
         """
         new_product = Product()
         new_product.name = request.data["name"]
-        new_product.price = request.data["price"]
-        new_product.description = request.data["description"]
-        new_product.quantity = request.data["quantity"]
-        new_product.location = request.data["location"]
+        price = float(request.data["price"])
 
-        customer = Customer.objects.get(user=request.auth.user)
-        new_product.customer = customer
+        if price > 17500.00:
+            return Response({'message': 'Price exceeds max possible cost of product.'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            new_product.price = price
+            new_product.description = request.data["description"]
+            new_product.quantity = request.data["quantity"]
+            new_product.location = request.data["location"]
 
-        product_category = ProductCategory.objects.get(pk=request.data["category_id"])
-        new_product.category = product_category
+            customer = Customer.objects.get(user=request.auth.user)
+            new_product.customer = customer
 
-        if "image_path" in request.data:
-            format, imgstr = request.data["image_path"].split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f'{new_product.id}-{request.data["name"]}.{ext}')
+            product_category = ProductCategory.objects.get(pk=request.data["category_id"])
+            new_product.category = product_category
 
-            new_product.image_path = data
+            if "image_path" in request.data:
+                format, imgstr = request.data["image_path"].split(';base64,')
+                ext = format.split('/')[-1]
+                data = ContentFile(base64.b64decode(imgstr), name=f'{new_product.id}-{request.data["name"]}.{ext}')
 
-        new_product.save()
+                new_product.image_path = data
 
-        serializer = ProductSerializer(
-            new_product, context={'request': request})
+            new_product.save()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = ProductSerializer(
+                new_product, context={'request': request})
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
         """
