@@ -241,8 +241,8 @@ class Profile(ViewSet):
                 open_order.save()
 
             line_item = OrderProduct()
-            line_item.product = Product.objects.filter(
-                pk=request.data["product_id"])[0]
+            line_item.product = Product.objects.get(
+                pk=request.data["product_id"])
             line_item.order = open_order
             line_item.save()
 
