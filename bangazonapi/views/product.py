@@ -311,15 +311,19 @@ class Products(ViewSet):
 
         if request.method == "POST":
             try:
-                like = Like()
-                like.customer = Customer.objects.get(user=request.auth.user)
-                like.product = Product.objects.filter(pk=pk)[0]
-                like.save()
-                return Response(None, status=status.HTTP_201_CREATED)
-            except Like.DoesNotExist as ex:
-                return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as ex:
-                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                like = Like.objects.get(product=pk, customer=request.auth.user.customer)
+                return Response({'message': 'User has already liked this product.'}, status=status.HTTP_400_BAD_REQUEST)
+            except Like.DoesNotExist:
+                try:
+                    like = Like()
+                    like.customer = Customer.objects.get(user=request.auth.user)
+                    like.product = Product.objects.filter(pk=pk)[0]
+                    like.save()
+                    return Response(None, status=status.HTTP_201_CREATED)
+                # except Like.DoesNotExist as ex:
+                #     return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as ex:
+                    return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if request.method == "DELETE":
             try:
