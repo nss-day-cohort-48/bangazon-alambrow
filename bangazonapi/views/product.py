@@ -1,4 +1,5 @@
 """View module for handling requests about products"""
+from bangazonapi.models.productrating import ProductRating
 from rest_framework.decorators import action
 from bangazonapi.models.recommendation import Recommendation
 import base64
@@ -8,7 +9,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, Like
+from bangazonapi.models import Product, Customer, ProductCategory, Like, customer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -348,7 +349,24 @@ class Products(ViewSet):
             return Response(serializer.data)
         except Exception as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
+    @action(methods=['post'], detail=True)
+    def rate(self, request, pk=None):
+        if request.method == "POST":
+            try:
+                rating = ProductRating.objects.get(product=pk, customer=request.auth.user.customer)
+                rating.rating = request.data["rating"]
+                rating.save()
+                return Response({'message': 'Rating updated'}, status=status.HTTP_204_NO_CONTENT)
+            except ProductRating.DoesNotExist:
+                rating = ProductRating()
+                rating.product = Product.objects.get(pk=pk)
+                rating.customer = Customer.objects.get(user=request.auth.user)
+                rating.rating = request.data["rating"]
+                rating.save()
+                return Response({'message': 'Product rating created.'}, status=status.HTTP_201_CREATED)
+            except Exception as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LikeSerializer(serializers.ModelSerializer):
     """JSON serializer for Likes"""
