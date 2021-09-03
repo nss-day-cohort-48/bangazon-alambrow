@@ -1,3 +1,4 @@
 from .connection import Connection
 from .expensive_products import expensive_products_list
+from .completed_orders import completed_order_list
 from .inexpensive_products import inexpensive_products_list
