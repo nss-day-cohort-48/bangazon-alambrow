@@ -111,7 +111,16 @@ class OrderTests(APITestCase):
         json_response = json.loads(response.content)
         self.assertIsNotNone(json_response['payment_type'])
 
+    def test_line_item_added_to_open_order(self):
+        # Add product to cart
+        url = "/cart"
+        data = { "product_id": 1 }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-
-    
-    # TODO: New line item is not added to closed order
+        # Get cart and verify product was added to open order (i.e. an order with a payment type of None)
+        response = self.client.get(url, None, format='json')
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(json_response["payment_type"])
