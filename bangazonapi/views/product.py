@@ -159,6 +159,8 @@ class Products(ViewSet):
             product = Product.objects.get(pk=pk)
             serializer = ProductSerializer(product, context={'request': request})
             return Response(serializer.data)
+        except Product.DoesNotExist as ex:
+            return Response({'message': 'No product with id {pk} in db.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as ex:
             return HttpResponseServerError(ex)
 
